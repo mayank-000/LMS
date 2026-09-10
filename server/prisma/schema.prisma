@@ -1,0 +1,101 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model Student {
+    id              String          @id @default(uuid())
+    username        String          @unique
+    password        String
+    purchases       Purchases[]
+    likes           Like[]
+    comment         Comment[]
+    createdAt       DateTime        @default(now())
+    progress        Progress[]
+}
+
+model Tutor {
+    id              String          @id @default(uuid())
+    username        String          @unique
+    password        String
+    courses         Course[]
+    createdAt       DateTime        @default(now())
+}
+
+model Course {
+    id              String          @id @default(uuid())
+    title           String
+    description     String?
+    tutorId         String
+    tutor           Tutor           @relation(fields: [tutorId], references: [id], onDelete: Cascade)
+    createdAt       DateTime        @default(now())
+    videos          Video[]
+    purchases       Purchases[]
+    progress        Progress[]
+} 
+
+// Mapping Table Student->Course
+model Purchases {
+    id              String          @id @default(uuid())
+    studentId       String
+    courseId        String
+    student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    course          Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+    createdAt       DateTime        @default(now())
+    @@unique([studentId, courseId])
+}
+
+// Mapping Table Student->Video (engagement)
+model Like {
+    id              String          @id @default(uuid())
+    studentId       String
+    videoId         String    
+    student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    video           Video           @relation(fields: [videoId], references: [id], onDelete: Cascade) 
+    createdAt       DateTime        @default(now())
+    @@unique([studentId, videoId]) // The same student cannot like the same video more than once.
+}
+
+model Video {
+    id              String          @id @default(uuid())
+    title           String          
+    description     String?
+    courseId        String
+    belongsTo       Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+    likes           Like[]
+    comment         Comment[]
+    url             String
+    order           Int // To play videos from the course in a order
+    language        String
+    progress        Progress[]
+    createdAt       DateTime        @default(now())
+    @@unique([courseId, order])
+}
+
+model Comment {
+    id              String          @id @default(uuid())
+    content         String
+    videoId         String
+    studentId       String
+    student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    video           Video           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+    createdAt       DateTime        @default(now())
+}
+
+model Progress {
+    id              String          @id @default(uuid())
+    studentId       String
+    videoId         String
+    courseId        String
+    completed       Boolean         @default(false)
+    completedAt     DateTime?
+    student         Student         @relation(fields: [studentId], references: [id], onDelete: Cascade)
+    video           Video           @relation(fields: [videoId], references: [id], onDelete: Cascade)
+    course          Course          @relation(fields: [courseId], references: [id], onDelete: Cascade)
+    @@unique([studentId, videoId]) // for a given combination of studentId + videoId, there can only be one row
+}
+

@@ -52,3 +52,5 @@ const deleteCourse = async (req, res) => {
     })
     return res.json({ Message: "Delete Course Successfully!" });
 }
+
+module.exports = { getContents, getEnrolledStudents, createCourse, deleteCourse };

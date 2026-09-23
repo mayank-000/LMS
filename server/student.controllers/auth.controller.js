@@ -58,3 +58,4 @@ const getStudentCourses = async (req, res) => {
     return res.json(courses)
 }
 
+module.exports = { StudentsignIn, StudentsignUp, getStudent, getStudentCourses };

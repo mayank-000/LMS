@@ -2,7 +2,7 @@ const { prisma } = require("../lib/prisma.js");
 
 const tutorCourseMiddleware = async (req, res, next) => {
     const tutorId = req.tutorId;
-    const { courseId } = req.params;
+    const { courseId } = req.query;
 
     if (!courseId) {
         return res.status(400).json({ message: "Attach courseId in the params "});
@@ -25,3 +25,5 @@ const tutorCourseMiddleware = async (req, res, next) => {
     req.courseId = courseId;
     next();
 }
+
+module.exports = tutorCourseMiddleware

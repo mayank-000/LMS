@@ -57,3 +57,4 @@ const getTutorCourses = async (req, res) => {
     return res.json(courses)
 }
 
+module.exports = { TutorsignUp, TutorsignIn, getTutor, getTutorCourses };

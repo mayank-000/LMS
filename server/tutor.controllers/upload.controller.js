@@ -1,5 +1,41 @@
 const { prisma } = require("../lib/prisma.js");
-const Upload = require("");
+const { Upload } = require("../utils/video.uploader.js");
+
+const getLikes = async (req, res) => {
+    const videoId = req.videoId;
+    const likes = await prisma.like.findMany({
+        where: {
+            videoId: videoId
+        },
+        select: {
+            student: true
+        }
+    });
+    const likeCount = await prisma.like.count({
+        where: {
+            videoId: videoId
+        }
+    });
+    return res.json({ likes, likeCount });
+}
+
+const getComments = async (req, res) => {
+    const videoId = req.videoId;
+    const comments = await prisma.comment.findMany({
+        where: {
+            videoId: videoId
+        },
+        select: {
+            student: true
+        }
+    });
+    const commentCount = await prisma.comment.count({
+        where: {
+            videoId: videoId
+        }
+    });
+    return res.json({ comments, commentCount });
+}
 
 const uploadVideo = async (req, res) => {
     const courseId = req.courseId;
@@ -55,3 +91,5 @@ const deleteVideo = async (req, res) => {
         message: "Video deleted successfully"
     });;
 }
+
+module.exports = { getLikes, getComments, uploadVideo, deleteVideo };

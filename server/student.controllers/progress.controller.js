@@ -53,3 +53,5 @@ const updateVideoProgress = async (req, res) => {
     })
     return res.json({message: "Video history Updated Successfully", progress})
 }
+
+module.exports = { getCourseProgress, getVideoProgress, updateVideoProgress };

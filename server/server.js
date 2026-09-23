@@ -4,6 +4,9 @@ const prisma = require("./config/db.js");
 const app = express();
 app.use(express.json());
 
+const UserRoute = require("./routes/student.route.js");
+const AdminRoute = require("./routes/tutor.route.js");
+
 app.get("/health", async (req, res) => {
     try {
         await prisma.$queryRaw`SELECT NOW()`;
@@ -13,6 +16,9 @@ app.get("/health", async (req, res) => {
     }
 });
 
-app.listen(3000, () => {
-    console.log("Server running on port 3000")
+app.use("/u", UserRoute);
+app.use("/a", AdminRoute);
+
+app.listen(5000, "0.0.0.0", () => {
+    console.log("Server running on port 5000")
 })

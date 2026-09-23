@@ -1,7 +1,7 @@
 const { prisma } = require("../lib/prisma.js")
 
 const studentAuthMiddleware = async (req, res, next) => {
-    const { userId } = req.params;
+    const { userId } = req.query;
     if (!userId) {
         return res.status(400).json({ message: "Please attach userId in params" });
     }
@@ -19,3 +19,5 @@ const studentAuthMiddleware = async (req, res, next) => {
     req.studentId = userId;
     next();
 }
+
+module.exports = studentAuthMiddleware

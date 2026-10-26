@@ -19,8 +19,8 @@ router.get("/courses", studentAuthMiddleware, getStudentCourses);
 router.post("/purchase", studentAuthMiddleware, purchaseCourse);
 
 router.get("/course_progress", studentAuthMiddleware, studentCourseMiddleware, getCourseProgress);
-router.get("/video", studentAuthMiddleware, studentCourseMiddleware, getVideo);
 
+router.get("/video", studentAuthMiddleware, studentCourseMiddleware, studentVideoMiddleware, getVideo);
 router.post("/like", studentAuthMiddleware, studentCourseMiddleware, studentVideoMiddleware, likedVideo);
 router.post("/comment", studentAuthMiddleware, studentCourseMiddleware, studentVideoMiddleware, commentVideo);
 router.get("/video_progress", studentAuthMiddleware, studentCourseMiddleware, studentVideoMiddleware, getVideoProgress);

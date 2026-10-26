@@ -2,7 +2,7 @@ const { prisma } = require("../lib/prisma.js");
 
 const purchaseCourse = async (req, res) => {
     const studentId = req.studentId;
-    const { courseId } = req.headers;
+    const { courseId } = req.query;
     
     if (!courseId) {
         return res.status(401).json({

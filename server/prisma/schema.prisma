@@ -11,6 +11,7 @@ model Student {
     id              String          @id @default(uuid())
     username        String          @unique
     password        String
+    refreshToken    String
     purchases       Purchases[]
     likes           Like[]
     comment         Comment[]
@@ -22,6 +23,7 @@ model Tutor {
     id              String          @id @default(uuid())
     username        String          @unique
     password        String
+    refreshToken    String
     courses         Course[]
     createdAt       DateTime        @default(now())
 }

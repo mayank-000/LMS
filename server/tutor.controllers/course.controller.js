@@ -1,4 +1,5 @@
 const { prisma } = require("../lib/prisma.js");
+const { minioClient } = require("minio")
 
 const getContents = async (req, res) => {
     const courseId = req.courseId;
@@ -45,6 +46,21 @@ const createCourse = async (req, res) => {
 
 const deleteCourse = async (req, res) => {
     const courseId = req.courseId;
+    const videos = await prisma.video.findMany({
+        where: {
+            courseId: courseId
+        },
+        select: {
+            url: true
+        }
+    });
+    // .catch(() => {}) on the MinIO delete — if one file is already missing or MinIO hiccups, 
+    // you don't want the whole loop to crash and leave some videos undeleted from MinIO 
+    // while others already got removed
+    for (const video of videos) {
+        await minioClient.removeObject('videos', video.url).catch(() => {});
+    }
+
     await prisma.course.delete({
         where: {
             id: courseId

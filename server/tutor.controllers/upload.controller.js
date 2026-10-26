@@ -1,5 +1,8 @@
+const fs = require('fs/promises');
 const { prisma } = require("../lib/prisma.js");
-const { Upload } = require("../utils/video.uploader.js");
+const { minioClient } = require("minio")
+const { compressVideo } = require("../utils/video.compress.js");
+const { uploadToMinio } = require("../utils/video.store.js");
 
 const getLikes = async (req, res) => {
     const videoId = req.videoId;
@@ -39,20 +42,21 @@ const getComments = async (req, res) => {
 
 const uploadVideo = async (req, res) => {
     const courseId = req.courseId;
-    const { title, description, language, content } = req.body;
-    const data = {
-        title: title,
-        description: description,
-        language: language,
-        videoContent: content
+    const { title, description, language } = req.body;
+    
+    const inputPath = req.file.path;
+    const outputPath = `compressed/${Date.now()}-${req.file.filename}.mp4`;
+
+    const compressedPath = await compressVideo(inputPath, outputPath);
+    
+    const videoKey = await uploadToMinio(compressedPath, req.file.filename);
+    if (!videoKey) {
+        return res.status(400).json({
+            message: "Video upload failed!"
+        })
     }
-    const response = await Upload(data).then(response => response.json());
-    if (!response || response.error) {
-        return res.status(404).json({
-            message: "Failed to Upload the video"
-        }, response?.error)
-    }
-    const url = response.url;
+    await fs.unlink(inputPath).catch(() => {});
+    await fs.unlink(compressedPath).catch(() => {});
 
     const lastVideo = await prisma.video.findFirst({
         where: {
@@ -69,7 +73,7 @@ const uploadVideo = async (req, res) => {
             title: title,
             description: description,
             courseId: courseId,
-            url: url,
+            url: videoKey,
             order: nextOrder,
             language: language,
         }
@@ -82,6 +86,17 @@ const uploadVideo = async (req, res) => {
 
 const deleteVideo = async (req, res) => {
     const videoId = req.videoId;
+
+    const video = await prisma.video.findUnique({
+        where: {
+            id: videoId
+        },
+        select: {
+            url: true
+        }
+    });
+    await minioClient.removeObject('videos', video.url);
+    
     await prisma.video.delete({
         where: {
             id: videoId

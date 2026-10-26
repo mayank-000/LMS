@@ -7,7 +7,7 @@ const studentVideoMiddleware = async (req, res, next) => {
     if (!videoId) {
         return res.status(400).json({ message: "Attach videoId in the params "});
     }
-    const video = await prisma.video.findUnique({
+    const video = await prisma.video.findFirst({
         where: {
             id: videoId,
             courseId: courseId
@@ -17,7 +17,7 @@ const studentVideoMiddleware = async (req, res, next) => {
         }
     });
     if (!video) {
-        return res.status(404).json({ message: "Invalid videoId" });
+        return res.status(404).json({ message: "Invalid videoId or this video does not belongs to this course!" });
     }
     req.videoId = videoId;
     next();

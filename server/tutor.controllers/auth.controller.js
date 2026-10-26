@@ -1,17 +1,29 @@
 const { prisma } = require("../lib/prisma.js");
 const bcrypt = require("bcrypt");
-// const jwt = require("jsonwebtoken");
+const jwt = require("jsonwebtoken");
+const dotenv = require("dotenv");
+dotenv.config();
+
+const JWT_SECRET = process.env.TUTOR_JWT_SECRET;
 
 const TutorsignUp = async (req, res) => {
-    const { username, password } = req.body;
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const Tutor = await prisma.tutor.create({
-        data: {
-            username,
-            password: hashedPassword
+    try {
+        const { username, password } = req.body;
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const Tutor = await prisma.tutor.create({
+            data: {
+                username,
+                password: hashedPassword
+            }
+        })
+        return res.status(201).json({ message: "SignUp Successful!", user: Tutor});
+    } catch (error) {
+        // User already exists
+        if (error.code === "P2002") {
+            return res.status(409).json({ message: "username already exists" });
         }
-    })
-    return res.json(Tutor.id)
+        return res.status(500).json({ message: "Internal Server error" });
+    }
 }
 
 const TutorsignIn = async (req, res) => {
@@ -27,8 +39,26 @@ const TutorsignIn = async (req, res) => {
     const validPassword = await bcrypt.compare(password, userExist.password);
     if (!validPassword) {
         return res.json({ message: "Wrong Credientials!"});
-    }
-    return res.json(userExist.id);
+    };
+
+    const token = jwt.sign(
+        {
+            id: userExist.id,
+            role: "tutor"
+        }, 
+        JWT_SECRET, 
+        {
+            expiresIn: "7d"
+        }
+    );
+    res.cookie("tutorToken", token, {
+        maxAge: 7*24*60*60*1000,
+        httpOnly: true
+    });
+
+    return res.status(200).json({
+        message: "Login Successful"
+    });
 }
 
 const getTutor = async (req, res) => {

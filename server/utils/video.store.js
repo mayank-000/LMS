@@ -1,32 +1,57 @@
-const Minio = require("minio");
+const { S3Client, HeadBucketCommand, CreateBucketCommand, DeleteObjectCommand } = require("@aws-sdk/client-s3");
+const { Upload } = require("@aws-sdk/lib-storage");
+const fs = require("fs");
 const dotenv = require("dotenv");
 dotenv.config();
 
-// minioClient.fPutObject('videos', key, compressedPath) opens the compressed file 
 // from disk and streams it into the MinIO container, 
-// into the videos bucket, under a unique key like 1699999999-lecture1.mp4.mp4. 
-// MinIO confirms success; the function returns just that key — not a URL.
+// into the videos bucket, under a unique key like 1699999999-lecture1.mp4. 
 
-const minioClient = new Minio.Client({
-  endPoint: process.env.MINIO_ENDPOINT,
-  port: parseInt(process.env.MINIO_PORT),
-  useSSL: false,
-  accessKey: process.env.MINIO_ACCESS_KEY,
-  secretKey: process.env.MINIO_SECRET_KEY,
-});
+const BUCKET = process.env.S3_BUCKET;
+
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true",
+  credentials: {
+    accessKeyId: process.env.S3_ACCESS_KEY,
+    secretAccessKey: process.env.S3_SECRET_KEY,
+  },
+})
 
 async function ensureBucket() {
-  const exists = await minioClient.bucketExists('videos').catch(() => false);
-  if (!exists) await minioClient.makeBucket('videos');
+  try {
+    await s3.send(new HeadBucketCommand({ Bucket: BUCKET }));
+  } catch {
+    await s3.send(new CreateBucketCommand({ Bucket: BUCKET }));
+  }
 }
-ensureBucket();
+if (process.env.S3_AUTO_CREATE_BUCKET === "true") {
+  ensureBucket().catch(console.error);
+}
 
-async function uploadToMinio(filePath, filename) {
-  const bucket = "videos";
-  const key = `${filename}.mp4`;
-
-  await minioClient.fPutObject(bucket, key, filePath);
+async function uploadToStorage(filePath, key) {
+  const upload = new Upload({
+    client: s3,
+    params: {
+      Bucket: BUCKET,
+      Key: key,
+      Body: fs.createReadStream(filePath),
+      ContentType: "video/mp4",
+    }
+  });
+  await upload.done();
   return key;
+};
+
+async function deleteFromStorage(key) {
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: BUCKET,
+      Key: key,
+    })
+  );
 }
 
-module.exports = uploadToMinio;
+module.exports = { uploadToStorage, deleteFromStorage };
+module.exports.s3 = s3; // reuse later for presigned URLs

@@ -2,6 +2,14 @@ version: "3.8"
 
 services:
 
+  redis: 
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --maxmemory-policy noeviction
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+
   database:
     image: postgres:16
     container_name: LMS_database_container
@@ -15,7 +23,7 @@ services:
       POSTGRES_DB: lms
       
   minio:
-    image: quay.io/minio/minio:latest
+    image: scnd/minio-mirror:RELEASE.2025-09-07T16-13-09Z
     command: server /data --console-address ":9001"
     ports: ["9000:9000", "9001:9001"]
     environment:
@@ -34,6 +42,7 @@ services:
     depends_on:
       - database
       - minio
+      - redis
     ports:
       - "5000:5000"
       - "5555:5555"
@@ -46,3 +55,4 @@ services:
 volumes:
   postgres_data:
   minio_data:
+  redis-data:

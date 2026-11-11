@@ -5,7 +5,8 @@ const getContents = async (req, res) => {
     const courseId = req.courseId;
     const contents = await prisma.video.findMany({
         where: {
-            courseId: courseId
+            courseId: courseId,
+            status: "successfull",
         },
         orderBy: {
             order: "asc"

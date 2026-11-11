@@ -11,7 +11,7 @@ const tutorAuthMiddleware = async (req, res, next) => {
     try {
         const decoded = jwt.verify(
             token,
-            process.env.TUTOR_JWT_SECRET
+            process.env.TUTOR_JWT_ACCESS_SECRET
         );
         if (decoded.role !== "tutor") { 
             return res.status(403).json({ message: "Access denied! "})
